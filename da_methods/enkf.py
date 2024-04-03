@@ -1,96 +1,95 @@
 import numpy as np
-import h_operator
 
-def enkf(mem,nx,ensemble,obs_vect,R):
-    
+# Function to generate the observation operator matrix (H matrix)
+def h_operator(nx, obs_vect):
     """
-    Implements the Ensemble Kalman Filter (EnKF) algorithm.
+    Create the observation operator matrix H.
 
-    Parameters:
-    mem (int): The number of ensemble members.
-    nx (int): The dimension of the state space.
-    ensemble (numpy.ndarray): The ensemble matrix, representing the state estimates. Each column is an ensemble member.
-    obs_vect (numpy.ndarray): The observation vector, containing observations of the system.
-    R (numpy.ndarray): The observation error covariance matrix.
+    Args:
+    nx (int): The size of the state vector.
+    obs_vect (numpy.array): Observation vector, where -999 indicates missing data.
 
     Returns:
-    dict: A dictionary containing the following key-value pairs:
-        - 'posterior' (numpy.ndarray): The posterior ensemble matrix after assimilating observations.
-        - 'kalman_gain' (numpy.ndarray): The Kalman gain matrix.
-        - 'innovation' (numpy.ndarray): The innovation vector, representing the difference between actual and predicted observations.
-        - 'mean_post' (numpy.ndarray): The mean of the posterior ensemble.
-        - 'cov_post' (numpy.ndarray): The covariance matrix of the posterior ensemble.
-
-    Description:
-    The function performs the following steps:
-    1. Filters the observation vector to remove invalid observations.
-    2. Organizes the prior ensemble matrix and calculates its mean and covariance.
-    3. Perturbs the observation vector for each ensemble member.
-    4. Calculates the observation operator matrix (h_matrix) using an external function 'h_operator'.
-    5. Computes the Kalman gain, which blends the uncertainty in the prior with the uncertainty in the observation.
-    6. Calculates the innovation, i.e., the discrepancy between observed and predicted observations.
-    7. Updates the ensemble (posterior) using the Kalman gain and the innovation.
-    8. Computes the mean and covariance of the posterior ensemble.
-    9. Returns a dictionary with the results.
-    
-    Note:
-    - The function assumes the availability of an external function 'h_operator' for computing the observation operator.
-    - Observations marked with -999 are considered invalid and filtered out.
-    - The function uses numpy for matrix operations.
+    numpy.array: The observation operator matrix.
     """
-    
-    index_obs=np.where(obs_vect>-999)[0]
-    num_obs=len(index_obs)
+    # Find indices of valid observations (not -999)
+    index_obs = np.where(obs_vect > -999)[0]
+    num_obs = len(index_obs)
 
-    # Organize the prior vector
-    #prior_vect=np.transpose(ensemble)
-    prior_vect=ensemble
-    
-    # Calculate the prior covariance matrix
-    mean_prior=np.mean(prior_vect,axis=1)
-    cov_prior=np.cov(prior_vect)
-    
-#     # Perturbed observation vector
-    obs_vect_filtered=obs_vect[index_obs]
-    obs_vect_perturbed=np.zeros((num_obs,mem))
-    r_obs_vect=np.diag(R)
+    # Initialize the H matrix with zeros
+    h_matrix = np.zeros((num_obs, nx))
+
+    # Set 1 at positions corresponding to actual observations
+    for i in range(num_obs):
+        h_matrix[i, index_obs[i]] = 1
+
+    return h_matrix
+
+# Function to implement the Ensemble Kalman Filter
+def enkf(mem, nx, ensemble, obs_vect, R):
+    """
+    Implement the Ensemble Kalman Filter.
+
+    Args:
+    mem (int): Number of ensemble members.
+    nx (int): The size of the state vector.
+    ensemble (numpy.array): Ensemble of state estimates.
+    obs_vect (numpy.array): Observation vector.
+    R (numpy.array): Observation error covariance matrix.
+
+    Returns:
+    dict: A dictionary containing the posterior ensemble, Kalman gain, innovation, 
+          mean and covariance of the posterior.
+    """
+    # Identify indices of valid observations
+    index_obs = np.where(obs_vect > -999)[0]
+    num_obs = len(index_obs)
+
+    # Prepare the prior state vector (ensemble matrix)
+    prior_vect = ensemble
+
+    # Calculate the mean and covariance of the prior
+    mean_prior = np.mean(prior_vect, axis=1)
+    cov_prior = np.cov(prior_vect)
+
+    # Filter and perturb the observation vector
+    obs_vect_filtered = obs_vect[index_obs]
+    obs_vect_perturbed = np.zeros((num_obs, mem))
+    r_obs_vect = np.diag(R)
     
     for i in range(mem):
         for j in range(num_obs):
-            obs_vect_perturbed[j,i]=obs_vect_filtered[j,0]
-  
-    #cov_obs=np.identity(num_obs)*r_obs**2
-    cov_obs=R[:,:]
-    
-#     # Calculate the observation operator
-    h_matrix=h_operator(nx,obs_vect)  
-    
-    #print(h_matrix.shape)
-    
-#     # Calculate the kalman gain
-    
-    k_left=cov_prior.dot(np.transpose(h_matrix))
-    k_right=h_matrix.dot(cov_prior).dot(np.transpose(h_matrix))+cov_obs
-    k_right_inv=np.linalg.inv(k_right)
+            obs_vect_perturbed[j, i] = obs_vect_filtered[j, 0]
 
-    kalman_gain=k_left.dot(k_right_inv)
-    
-#     # Calculate the innovation
-    
-    innovation=obs_vect_perturbed-h_matrix.dot(prior_vect)
+    # Observation error covariance matrix
+    cov_obs = R[:, :]
 
-    
-#     # Calculate the posterior
-    
-    posterior_vect=prior_vect+kalman_gain.dot(innovation)
+    # Calculate the observation operator matrix
+    h_matrix = h_operator(nx, obs_vect)
 
-    mean_posterior=np.mean(posterior_vect, axis=1)
-    
-    cov_posterior=np.cov(posterior_vect)
-    
-#     res_matrix=np.transpose(h_matrix).dot(k_right_inv).dot(h_matrix).dot(cov_prior)
-    
-    enkf={"posterior":posterior_vect,"kalman_gain":kalman_gain,"innovation":innovation,
-          "mean_post":mean_posterior,"cov_post":cov_posterior}
-    
-    return enkf
+    # Calculate the Kalman gain
+    k_left = cov_prior.dot(np.transpose(h_matrix))
+    k_right = h_matrix.dot(cov_prior).dot(np.transpose(h_matrix)) + cov_obs
+    k_right_inv = np.linalg.inv(k_right)
+    kalman_gain = k_left.dot(k_right_inv)
+
+    # Calculate the innovation
+    innovation = obs_vect_perturbed - h_matrix.dot(prior_vect)
+
+    # Calculate the posterior ensemble
+    posterior_vect = prior_vect + kalman_gain.dot(innovation)
+
+    # Compute mean and covariance of the posterior
+    mean_posterior = np.mean(posterior_vect, axis=1)
+    cov_posterior = np.cov(posterior_vect)
+
+    # Return a dictionary of EnKF outputs
+    enkf_output = {
+        "posterior": posterior_vect,
+        "kalman_gain": kalman_gain,
+        "innovation": innovation,
+        "mean_post": mean_posterior,
+        "cov_post": cov_posterior
+    }
+
+    return enkf_output
