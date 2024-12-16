@@ -416,7 +416,7 @@ warm_nt = int(200/tstep)                 # number of warm-up time steps
 
 
 
-folder_truth='/palmyra/data/hadiabmontero/non_gaussian_data_assim/data/bk_rsf_1d/BK_RSF_1D_test_datasets_periodic/truth/'
+folder_truth='/data/bk_rsf_1d/BK_RSF_1D_test_datasets_periodic/truth/'
 
 filename_data_theta_truth=os.path.join(folder_truth,'truth_theta_bk1d_periodic.txt')
 filename_data_v_truth=os.path.join(folder_truth,'truth_v_bk1d_periodic.txt')
@@ -443,7 +443,7 @@ index_truth = range(len(t_truth))
 
 t_first_da = int(warm_nt/obs_rate)+1 # index first assimilation 
 
-folder_obsnet='/palmyra/data/hadiabmontero/non_gaussian_data_assim/data/bk_rsf_1d/BK_RSF_1D_test_datasets_periodic/obsnet/'
+folder_obsnet='/data/bk_rsf_1d/BK_RSF_1D_test_datasets_periodic/obsnet/'
 
 filename_time_obsnet_c3=os.path.join(folder_obsnet,'obsnet_c3','obsnet_time_bk1d_periodic_obs_c3.txt')
 filename_tau_obsnet_c3=os.path.join(folder_obsnet,'obsnet_c3','obsnet_tau_bk1d_periodic_obs_c3.txt')
@@ -508,7 +508,7 @@ X_t = np.zeros((n_x*N, n_mem, n_t))
 # Q_inv = np.linalg.inv(Q)
 # X_t_2= np.random.multivariate_normal(ctlmean, Q, n_mem).T
 
-folder_prior='/palmyra/data/hadiabmontero/non_gaussian_data_assim/data/bk_rsf_1d/BK_RSF_1D_test_datasets_periodic/prior/'
+folder_prior='/data/bk_rsf_1d/BK_RSF_1D_test_datasets_periodic/prior/'
 
 filename_theta_prior=os.path.join(folder_prior,'prior_theta_bk1d_20_100_particles_periodic.txt')
 filename_u_prior=os.path.join(folder_prior,'prior_u_bk1d_20_100_particles_periodic.txt')
