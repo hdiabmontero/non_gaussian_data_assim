@@ -1,0 +1,9 @@
+# @package da_method
+name: pff
+_target_: non_gaussian_data_assim.da_methods.pff.ParticleFlowFilter
+num_pseudo_time_steps: 100
+inflation_factor: 1.0
+step_size: 0.05
+stepper: forward_euler
+localization_distance: null
+prior_cov_regularization: null

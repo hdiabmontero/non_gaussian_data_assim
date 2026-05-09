@@ -1,0 +1,17 @@
+defaults:
+  - _self_
+  - case: lorenz_63
+  - da_method: enkf
+
+# Common, case-agnostic settings.
+seed: 42
+
+# Sensible fallbacks; each case file overrides these to match its needs.
+data_assimilation_steps: 100
+model_integration_steps: 50
+ensemble_size: 100
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .

@@ -1,0 +1,5 @@
+# @package da_method
+name: particle_filter
+_target_: non_gaussian_data_assim.da_methods.particle_filter.ParticleFilter
+resample_threshold: 0.5
+jitter_scale: 0.0

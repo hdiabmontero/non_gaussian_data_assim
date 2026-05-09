@@ -1,0 +1,68 @@
+# @package _global_
+data_assimilation_steps: 50
+model_integration_steps: 1
+ensemble_size: 100
+inflation_factor: 1.0
+localization_distance: 10
+
+case:
+  name: lorenz_96
+  title: "Lorenz 96"
+  num_states: 1
+  state_dim: 50
+  obs_noise_variance: 0.25
+
+  forward_model:
+    _target_: non_gaussian_data_assim.forward_models.lorenz_96.Lorenz96Model
+    forcing_term: 8.0
+    state_dim: ${case.state_dim}
+    dt: 0.01
+    model_integration_steps: ${model_integration_steps}
+
+  obs_operator:
+    _target_: non_gaussian_data_assim.observations.observation_operator.LinearObservationOperator
+    state_dim: ${case.state_dim}
+    obs_states: [0]
+    obs_indices:
+      _target_: numpy.arange
+      start: 0
+      stop: ${case.state_dim}
+      step: 2
+
+  initial_state:
+    _target_: non_gaussian_data_assim.initial_conditions.random_normal_initial_state
+    _partial_: true
+    num_states: ${case.num_states}
+    state_dim: ${case.state_dim}
+    scale: 10.0
+    periodic_boundary: true
+
+  prior_ensemble:
+    _target_: non_gaussian_data_assim.initial_conditions.random_normal_prior_ensemble
+    _partial_: true
+    num_states: ${case.num_states}
+    state_dim: ${case.state_dim}
+    scale: 10.0
+    periodic_boundary: true
+
+  plotter:
+    _target_: non_gaussian_data_assim.plotting.plot_high_dim_field
+    _partial_: true
+
+  da_method_overrides:
+    enkf:
+      inflation_factor: ${inflation_factor}
+      localization_distance: ${localization_distance}
+    agmf:
+      inflation_factor: ${inflation_factor}
+      nc_threshold: 0.5
+      localization_distance: ${localization_distance}
+    pff:
+      num_pseudo_time_steps: 200
+      step_size: 0.1
+      stepper: runge_kutta_4
+      localization_distance: 5
+      inflation_factor: ${inflation_factor}
+    particle_filter:
+      resample_threshold: 0.5
+      jitter_scale: 0.3

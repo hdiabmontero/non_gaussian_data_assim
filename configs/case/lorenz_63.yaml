@@ -1,0 +1,70 @@
+# @package _global_
+data_assimilation_steps: 100
+model_integration_steps: 50
+ensemble_size: 100
+inflation_factor: 1.0
+
+case:
+  name: lorenz_63
+  title: "Lorenz 63"
+  num_states: 1
+  state_dim: 3
+  obs_noise_variance: 5.0
+
+  forward_model:
+    _target_: non_gaussian_data_assim.forward_models.lorenz_63.Lorenz63Model
+    dt: 0.01
+    model_integration_steps: ${model_integration_steps}
+    sigma: 10.0
+    beta: 2.6666666
+    rho: 28.0
+
+  obs_operator:
+    _target_: non_gaussian_data_assim.observations.observation_operator.LinearObservationOperator
+    state_dim: ${case.state_dim}
+    obs_states: [0]
+    obs_indices:
+      _target_: numpy.arange
+      start: 0
+      stop: 3
+
+  initial_state:
+    _target_: non_gaussian_data_assim.initial_conditions.random_normal_initial_state
+    _partial_: true
+    num_states: ${case.num_states}
+    state_dim: ${case.state_dim}
+    scale: 10.0
+    periodic_boundary: false
+
+  prior_ensemble:
+    _target_: non_gaussian_data_assim.initial_conditions.random_normal_prior_ensemble
+    _partial_: true
+    num_states: ${case.num_states}
+    state_dim: ${case.state_dim}
+    scale: 10.0
+    periodic_boundary: false
+
+  plotter:
+    _target_: non_gaussian_data_assim.plotting.plot_low_dim_trajectory
+    _partial_: true
+    state_names: [x, y, z]
+
+  # Per-DA-method overrides specific to this case. Merged onto the chosen
+  # da_method config in main.py.
+  da_method_overrides:
+    enkf:
+      inflation_factor: ${inflation_factor}
+      localization_distance: null
+    agmf:
+      inflation_factor: ${inflation_factor}
+      nc_threshold: 0.5
+      localization_distance: null
+    pff:
+      num_pseudo_time_steps: 1500
+      step_size: 0.05
+      stepper: runge_kutta_4
+      localization_distance: null
+      inflation_factor: ${inflation_factor}
+    particle_filter:
+      resample_threshold: 0.5
+      jitter_scale: 0.5

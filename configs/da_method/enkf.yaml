@@ -1,0 +1,5 @@
+# @package da_method
+name: enkf
+_target_: non_gaussian_data_assim.da_methods.enkf.EnsembleKalmanFilter
+inflation_factor: 1.0
+localization_distance: null

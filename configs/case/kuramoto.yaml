@@ -1,0 +1,70 @@
+# @package _global_
+data_assimilation_steps: 10
+model_integration_steps: 10
+ensemble_size: 50
+inflation_factor: 1.0
+localization_distance: 100
+
+
+case:
+  name: kuramoto
+  title: "Kuramoto-Sivashinsky"
+  num_states: 1
+  state_dim: 512
+  obs_noise_variance: 0.1
+  domain_length: 100
+
+  forward_model:
+    _target_: non_gaussian_data_assim.forward_models.kuramoto_sivashinsky.KuramotoSivashinsky
+    dt: 0.05
+    model_integration_steps: ${model_integration_steps}
+    state_dim: ${case.state_dim}
+    domain_length: ${case.domain_length}
+
+  obs_operator:
+    _target_: non_gaussian_data_assim.observations.observation_operator.LinearObservationOperator
+    state_dim: ${case.state_dim}
+    obs_states: [0]
+    obs_indices:
+      _target_: numpy.arange
+      start: 0
+      stop: ${case.state_dim}
+      step: 4
+
+  initial_state:
+    _target_: non_gaussian_data_assim.initial_conditions.kuramoto_cosine_initial_state
+    _partial_: true
+    state_dim: ${case.state_dim}
+    domain_length: ${case.domain_length}
+    magnitude: 0.1
+
+  prior_ensemble:
+    _target_: non_gaussian_data_assim.initial_conditions.kuramoto_cosine_prior_ensemble
+    _partial_: true
+    state_dim: ${case.state_dim}
+    domain_length: ${case.domain_length}
+    magnitude_min: 0.0
+    magnitude_max: 1.5
+
+  plotter:
+    _target_: non_gaussian_data_assim.plotting.plot_high_dim_field
+    _partial_: true
+
+  da_method_overrides:
+    enkf:
+      inflation_factor: ${inflation_factor}
+      localization_distance: ${localization_distance}
+    agmf:
+      inflation_factor: ${inflation_factor}
+      nc_threshold: 0.5
+      localization_distance: ${localization_distance}
+    pff:
+      num_pseudo_time_steps: 10
+      step_size: 0.1
+      stepper: forward_euler
+      localization_distance: ${localization_distance}
+      inflation_factor: ${inflation_factor}
+      prior_cov_regularization: 1.0e-2
+    particle_filter:
+      resample_threshold: 0.5
+      jitter_scale: 0.05
